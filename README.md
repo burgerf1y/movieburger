@@ -1,3 +1,5 @@
+# MovieBurger
+MovieBurger是一个基于爬虫和机器学习的豆瓣电影推荐工具。
 ## crawler
 crawler会对豆瓣Top250电影的用户评分信息进行爬取，由三个python文件组成。
 ### get_top250.py
@@ -5,8 +7,15 @@ crawler会对豆瓣Top250电影的用户评分信息进行爬取，由三个pyth
 ### get_user.py
 为了获取足够数量的用户id，我们采用的方法是给定一个起始用户，递归地查找其关注的用户和其粉丝，从而能迅速地获得海量的用户id。
 
-上述过程的难点在于需要登录豆瓣才可以查看用户的关注列表和粉丝列表。为此，我们使用了selenium中的webdriver来模拟真实浏览器的行为。登录豆瓣可能涉及到输入账号密码、拖动滑块、手机APP扫码等等步骤，其中输入账号密码可以用webdriver中的send()实现，拖动滑块可以用webdriver中的ActionChains实现。由于程序拖动滑块的准确率不高，所以get_user.py将整个登录的过程都交给聪明的你自行完成。聪明的你登录成功后，只需要在终端输入任何字符，程序便会开始递归执行，直到搜索到足够数量的用户id，写入data目录下的user.csv文件。
-### get_rating.py
-对于get_user.py中得到的用户进行遍历，选择看过五十部以上的电影、且评分过十部以上Top250电影的用户的评分进行记录，写入data目录下的user_rating.csv文件。上述过程使用了强大的re库，可以跳出html文件的格式限制，非常灵活。
+上述过程的难点在于需要登录豆瓣才可以查看用户的关注列表和粉丝列表。聪明的你需要自行手动登录豆瓣，登录成功后，在终端输入任何字符，程序便会开始递归执行，与此同时将用户id写入data目录下的user.csv文件。
 
-由于逐一访问用户的电影评分的工作量是巨大的，故get_rating.py还会维护一个user_passed.csv文件，记录哪些用户的电影评分已经被记录过了，便于程序分多次执行。
+注意，运行get_user.py前，需要先在data目录下的users.csv中写入起始用户的id，例如whiterhinoceros.
+### get_rating.py
+对于get_user.py中得到的用户进行遍历，选择看过五十部以上的电影、且评分过十部以上Top250电影的用户的评分进行记录，写入data目录下的user_rating.csv文件。
+## MLP
+MLP将爬取到的用户评分数据传入DNN进行训练。
+
+用户的评分将通过utils.py中的randhandlerating方法进行一定程度的随机化，在经过DNN模型的前向传播后，与原始数据通过ModifiedMarginRankingLoss计算出los
+，再进行反向传播。
+
+数据集划分：采用k-fold交叉验证。80%的数据用于训练，且其中10%作为验证集，剩余20%的数据将作为测试集.
